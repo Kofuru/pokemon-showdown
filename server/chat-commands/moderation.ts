@@ -467,7 +467,7 @@ export const commands: Chat.ChatCommands = {
 	],
 
 	async autojoin(target, room, user, connection) {
-		const targets = target.split(',');
+		const targets = target.split(',').filter(Boolean);
 		if (targets.length > 16 || connection.inRooms.size > 1) {
 			return connection.popup("To prevent DoS attacks, you can only use /autojoin for 16 or fewer rooms, when you haven't joined any rooms yet. Please use /join for each room separately.");
 		}
@@ -564,7 +564,7 @@ export const commands: Chat.ChatCommands = {
 				`${targetID} was warned by ${user.name} while offline.${publicReason ? ` (${publicReason})` : ``}`
 			);
 			this.globalModlog('WARN OFFLINE', targetUser || targetID, privateReason);
-			Punishments.offlineWarns.set(targetID, reason);
+			Punishments.offlineWarns.set(targetID, publicReason);
 			if (saveReplay) this.parse('/savereplay forpunishment');
 			return;
 		}
@@ -698,9 +698,11 @@ export const commands: Chat.ChatCommands = {
 			const displayMessage = `${targetUser.name}'s ac account: ${targetUser.autoconfirmed}`;
 			this.privateModAction(displayMessage);
 		}
-		const userid = targetUser.getLastId();
-		this.add(`|hidelines|unlink|${userid}`);
-		if (userid !== toID(inputUsername)) this.add(`|hidelines|unlink|${toID(inputUsername)}`);
+		const ids = [targetUser.getLastId()];
+		if (ids[0] !== toID(inputUsername)) {
+			ids.push(toID(inputUsername));
+		}
+		room.hideText(ids);
 
 		room.mute(targetUser, muteDuration);
 	},
